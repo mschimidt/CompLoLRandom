@@ -81,7 +81,8 @@
             const allItems = Object.entries(i.data).map(([id, val]) => ({ id, ...val }));
             // Apenas itens do Summoner's Rift (mapa 11) compráveis sem requisito de campeão
             state.items = allItems.filter(it => it.maps && it.maps['11'] && it.gold.purchasable && !it.requiredChampion);
-            state.boots = state.items.filter(it => it.tags.includes('Boots') && !it.requiredItem && it.gold.total >= 900);
+            const BOOTS_WHITELIST = ["Berserker's Greaves","Boots of Swiftness","Gluttonous Greaves","Ionian Boots of Lucidity","Mercury's Treads","Plated Steelcaps","Sorcerer's Shoes"];
+            state.boots = allItems.filter(it => BOOTS_WHITELIST.includes(it.name));
             state.legendaryItems = state.items.filter(it =>
                 !it.tags.includes('Boots') && !it.into && !it.requiredItem &&
                 !it.tags.includes('Consumable') && !it.tags.includes('Trinket') &&
