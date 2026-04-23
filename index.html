@@ -56,8 +56,9 @@
 
     <div class="container hidden" id="comp-screen" style="padding-top: 1rem;">
         <h1 id="view-title" style="margin-bottom: 1rem; font-size: 2.5rem;">Sua Composição</h1>
-        <div style="text-align: center; margin-bottom: 0.5rem;">
-            <button class="btn" id="next-btn" style="max-width: 300px; padding: 0.8rem; font-size: 1rem;">Gerar Próximo</button>
+        <div style="text-align: center; margin-bottom: 0.5rem; display: flex; gap: 1rem; justify-content: center;">
+            <button class="btn" id="next-btn" style="max-width: 220px; padding: 0.8rem; font-size: 1rem;">Gerar Próximo</button>
+            <button class="btn" id="all-btn" style="max-width: 220px; padding: 0.8rem; font-size: 1rem; background: rgba(10,200,185,0.3); color: var(--blue); border: 1px solid var(--blue);">Gerar Todos</button>
         </div>
         <div id="comp-grid"></div>
     </div>
@@ -77,7 +78,16 @@
                 fetch(`https://ddragon.leagueoflegends.com/cdn/${state.version}/data/pt_BR/summoner.json`).then(r => r.json())
             ]);
             state.champions = Object.values(c.data);
-            state.items = Object.entries(i.data).map(([id, val]) => ({ id, ...val }));
+            const allItems = Object.entries(i.data).map(([id, val]) => ({ id, ...val }));
+            // Apenas itens do Summoner's Rift (mapa 11) compráveis sem requisito de campeão
+            state.items = allItems.filter(it => it.maps && it.maps['11'] && it.gold.purchasable && !it.requiredChampion);
+            state.boots = state.items.filter(it => it.tags.includes('Boots') && !it.requiredItem && it.gold.total >= 900);
+            state.legendaryItems = state.items.filter(it =>
+                !it.tags.includes('Boots') && !it.into && !it.requiredItem &&
+                !it.tags.includes('Consumable') && !it.tags.includes('Trinket') &&
+                !it.name.includes('Doran') && !it.name.includes('Cristal de Runa') &&
+                it.gold.total >= 2000
+            );
             state.spells = Object.values(s.data).filter(s => s.modes.includes('CLASSIC'));
             renderSetup();
         }
@@ -175,76 +185,106 @@
             });
         };
 
-        document.getElementById('next-btn').onclick = async () => {
-            if(state.currentGenIndex >= state.players.length) return;
-            const btn = document.getElementById('next-btn');
-            btn.disabled = true;
-            btn.innerText = 'Gerando...';
-
-            const idx = state.currentGenIndex;
+        const generatePlayer = async (idx, animated = true) => {
             const p = state.players[idx];
             const team = idx < 5 ? state.pools.team1 : state.pools.team2;
-            
+            const dur = animated ? undefined : 0;
+
             let role = p.fixedRole;
             if(role === 'RANDOM') {
-                const r = await rollSlot('text', `res-role-${idx}`, team.roles.map(r => ({ name: ROLE_NAMES[r], val: r })), 600);
+                const r = await rollSlot('text', `res-role-${idx}`, team.roles.map(r => ({ name: ROLE_NAMES[r], val: r })), dur ?? 600);
                 role = r.val;
             } else {
                 document.getElementById(`res-role-${idx}`).innerText = ROLE_NAMES[role].toUpperCase();
             }
             team.roles = team.roles.filter(r => r !== role);
 
-            const champ = await rollSlot('img', `res-img-${idx}`, team.champs.map(c => ({ name: c.name, val: c, img: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${c.id}_0.jpg` })), 800);
+            const champ = await rollSlot('img', `res-img-${idx}`, team.champs.map(c => ({ name: c.name, val: c, img: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${c.id}_0.jpg` })), dur ?? 800);
             document.getElementById(`res-img-${idx}`).style.filter = 'none';
             team.champs = team.champs.filter(c => c.id !== champ.val.id);
 
-            const s1 = await rollSlot('img', `res-s1-${idx}`, state.spells.map(s => ({ name: s.name, val: s, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${s.id}.png` })), 400);
-            const s2 = await rollSlot('img', `res-s2-${idx}`, state.spells.filter(s => s.id !== s1.val.id).map(s => ({ name: s.name, val: s, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${s.id}.png` })), 400);
+            const s1 = await rollSlot('img', `res-s1-${idx}`, state.spells.map(s => ({ name: s.name, val: s, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${s.id}.png` })), dur ?? 400);
+            const s2 = await rollSlot('img', `res-s2-${idx}`, state.spells.filter(s => s.id !== s1.val.id).map(s => ({ name: s.name, val: s, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${s.id}.png` })), dur ?? 400);
 
-            const boots = await rollSlot('img', `res-bot-${idx}`, state.items.filter(i => i.tags.includes('Boots') && i.gold.purchasable && !i.into).map(i => ({ name: i.name, val: i, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${i.id}.png` })), 400);
+            const boots = await rollSlot('img', `res-bot-${idx}`, state.boots.map(i => ({ name: i.name, val: i, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${i.id}.png` })), dur ?? 400);
 
             const isSupp = role === 'UTILITY';
+            const itemPool = state.legendaryItems.filter(it =>
+                isSupp ? true : !it.tags.includes('GoldPer') && !it.tags.includes('Vision')
+            );
             let activeItems = [];
             for(let i=1; i<=6; i++) {
-                const filtered = state.items.filter(it => 
-                    it.gold.purchasable && 
-                    !it.tags.includes('Boots') && 
-                    !activeItems.includes(it.id) && 
-                    !it.tags.includes('Consumable') &&
-                    !it.tags.includes('Trinket') &&
-                    !it.name.includes('Doran') &&
-                    !it.requiredChampion &&
-                    !it.into &&
-                    it.gold.total > 1500 &&
-                    (isSupp ? true : !it.description.includes('Suporte') && !it.tags.includes('GoldPer') && !it.tags.includes('Vision'))
-                );
-                const item = await rollSlot('img', `res-i${i}-${idx}`, filtered.map(it => ({ name: it.name, val: it, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${it.id}.png` })), 300);
+                const filtered = itemPool.filter(it => !activeItems.includes(it.id));
+                const item = await rollSlot('img', `res-i${i}-${idx}`, filtered.map(it => ({ name: it.name, val: it, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${it.id}.png` })), dur ?? 300);
                 activeItems.push(item.val.id);
             }
 
-            // Atribuir as tooltips com nomes
             document.getElementById(`res-s1-${idx}`).title = s1.val.name;
             document.getElementById(`res-s2-${idx}`).title = s2.val.name;
             document.getElementById(`res-bot-${idx}`).title = boots.val.name;
             activeItems.forEach((id, i) => {
-                const itemDef = state.items.find(it => it.id === id);
+                const itemDef = state.legendaryItems.find(it => it.id === id);
                 document.getElementById(`res-i${i+1}-${idx}`).title = itemDef ? itemDef.name : '';
             });
 
             p.result = { role, champ: champ.val, spells: [s1.val, s2.val], boots: boots.val, items: activeItems };
-            
+        };
+
+        const setButtons = (generating) => {
+            const nb = document.getElementById('next-btn');
+            const ab = document.getElementById('all-btn');
+            nb.disabled = generating;
+            ab.disabled = generating;
+            if(!generating) { nb.innerText = 'Gerar Próximo'; ab.innerText = 'Gerar Todos'; }
+        };
+
+        document.getElementById('next-btn').onclick = async () => {
+            if(state.currentGenIndex >= state.players.length) return;
+            setButtons(true);
+            document.getElementById('next-btn').innerText = 'Gerando...';
+            const idx = state.currentGenIndex;
+            document.getElementById(`p-card-${idx}`).classList.add('active');
+            await generatePlayer(idx, true);
             document.getElementById(`p-card-${idx}`).classList.remove('active');
             state.currentGenIndex++;
             if(state.currentGenIndex < state.players.length) {
                 document.getElementById(`p-card-${state.currentGenIndex}`).classList.add('active');
-                btn.disabled = false;
-                btn.innerText = 'Gerar Próximo';
+                setButtons(false);
             } else {
-                btn.style.display = 'none';
+                document.getElementById('next-btn').style.display = 'none';
+                document.getElementById('all-btn').style.display = 'none';
             }
+        };
+
+        document.getElementById('all-btn').onclick = async () => {
+            if(state.currentGenIndex >= state.players.length) return;
+            setButtons(true);
+            document.getElementById('all-btn').innerText = 'Gerando...';
+
+            // Esconde todos os cards não gerados ainda
+            for(let i = state.currentGenIndex; i < state.players.length; i++)
+                document.getElementById(`p-card-${i}`).style.opacity = '0.1';
+
+            // Gera cada player sequencialmente sem animações
+            while(state.currentGenIndex < state.players.length) {
+                const idx = state.currentGenIndex;
+                await generatePlayer(idx, false);
+                state.currentGenIndex++;
+            }
+
+            // Exibe todos os cards de uma vez com fade-in
+            for(let i = 0; i < state.players.length; i++) {
+                const card = document.getElementById(`p-card-${i}`);
+                card.style.transition = 'opacity 0.5s ease-out';
+                card.style.opacity = '1';
+            }
+
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('all-btn').style.display = 'none';
         };
 
         init();
     </script>
 </body>
 </html>
+
