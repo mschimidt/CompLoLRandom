@@ -18,22 +18,26 @@
         input, select { width: 100%; background: rgba(0,0,0,0.6); border: 1px solid var(--gold-dark); color: white; padding: 1rem; border-radius: 2px; outline: none; transition: 0.3s; font-family: 'Inter'; }
         input:focus { border-color: var(--blue); box-shadow: 0 0 10px rgba(10, 200, 185, 0.2); }
         .btn { background: var(--gold-dark); color: #010a13; border: none; padding: 1.2rem; font-family: 'Cinzel', serif; font-weight: bold; cursor: pointer; transition: 0.4s; text-transform: uppercase; width: 100%; letter-spacing: 3px; font-size: 1rem; position: relative; overflow: hidden; }
-        .btn:hover { background: var(--gold); box-shadow: 0 0 25px var(--gold); transform: translateY(-2px); }
+        .btn:hover:not(:disabled) { background: var(--gold); box-shadow: 0 0 25px var(--gold); transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .player-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; margin-top: 1.2rem; padding-top: 1.2rem; border-top: 1px solid var(--glass); animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         #comp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; }
         .team-title { grid-column: 1 / -1; font-family: 'Cinzel', serif; color: var(--blue); border-bottom: 2px solid var(--blue); padding: 0.5rem 0; margin: 0.5rem 0 0.5rem; text-align: center; font-size: 1.5rem; text-shadow: 0 0 15px var(--blue); letter-spacing: 4px; background: linear-gradient(90deg, transparent, rgba(10, 200, 185, 0.1), transparent); }
-        .player-card { background: var(--card-bg); border: 1px solid var(--gold-dark); border-radius: 4px; padding: 0.8rem; text-align: center; position: relative; transition: 0.5s; cursor: default; }
+        .player-card { background: var(--card-bg); border: 1px solid var(--gold-dark); border-radius: 4px; padding: 0.6rem; text-align: center; position: relative; transition: 0.5s; cursor: default; }
         .player-card.active { border-color: var(--blue); box-shadow: 0 0 40px rgba(10, 200, 185, 0.3); transform: translateY(-8px); z-index: 2; }
         .player-card:hover:not(.active) { border-color: var(--gold); transform: translateY(-4px); }
-        .slot-img { width: 100%; aspect-ratio: 0.7; background: #000; border: 1px solid var(--gold-dark); object-fit: cover; margin-bottom: 1rem; transition: 1s; box-shadow: inset 0 0 30px black; }
-        .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 1rem; }
-        .item-icon { width: 100%; aspect-ratio: 1; border: 1px solid var(--gold-dark); transition: 0.3s; background: rgba(0,0,0,0.4); border-radius: 3px; }
+        
+        .section-label { font-size: 0.65rem; color: var(--gold); text-transform: uppercase; margin: 0.4rem 0 0.2rem; letter-spacing: 1px; opacity: 0.9; }
+        .slot-img { width: 100%; aspect-ratio: 0.75; background: #000; border: 1px solid var(--gold-dark); object-fit: cover; transition: 0.5s; box-shadow: inset 0 0 30px black; }
+        .slots-row { display: flex; gap: 6px; justify-content: center; }
+        .items-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; justify-content: center; }
+        .item-icon { width: 100%; aspect-ratio: 1; border: 1px solid var(--gold-dark); transition: 0.3s; background: rgba(0,0,0,0.4); border-radius: 3px; object-fit: cover; }
+        .item-icon:not([src]) { opacity: 0; }
+        .item-icon[src] { opacity: 1; }
         .item-icon:hover { border-color: var(--gold); transform: scale(1.1); z-index: 3; }
-        #wheel-modal { position: fixed; inset: 0; background: rgba(1, 10, 19, 0.98); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(12px); }
-        .wheel-content { background: #010a13; border: 2px solid var(--gold); padding: 4rem 2rem; text-align: center; max-width: 500px; width: 95%; box-shadow: 0 0 100px rgba(200, 170, 110, 0.15); border-radius: 4px; }
-        .rolling-slot { margin: 2rem 0; font-size: 1.8rem; color: var(--gold); font-weight: bold; font-family: 'Cinzel', serif; height: 2.5rem; display: flex; align-items: center; justify-content: center; text-shadow: 0 0 10px var(--gold-dark); }
-        .rolling-img { width: 180px; height: 180px; margin: 0 auto; border: 3px solid var(--gold); display: block; box-shadow: 0 0 40px rgba(200, 170, 110, 0.2); background: black; }
+        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -52,19 +56,10 @@
 
     <div class="container hidden" id="comp-screen" style="padding-top: 1rem;">
         <h1 id="view-title" style="margin-bottom: 1rem; font-size: 2.5rem;">Sua Composição</h1>
-        <div style="text-align: center; margin-bottom: 1rem;">
+        <div style="text-align: center; margin-bottom: 0.5rem;">
             <button class="btn" id="next-btn" style="max-width: 300px; padding: 0.8rem; font-size: 1rem;">Gerar Próximo</button>
         </div>
         <div id="comp-grid"></div>
-    </div>
-
-    <div id="wheel-modal">
-        <div class="wheel-content">
-            <h2 id="rolling-player-name" style="font-family: Cinzel; color: var(--gold); margin-bottom: 2rem; font-size: 2.2rem; letter-spacing: 2px;"></h2>
-            <div id="rolling-field-name" style="text-transform: uppercase; font-size: 1rem; color: var(--blue); letter-spacing: 4px; font-weight: bold; margin-bottom: 1.5rem; opacity: 0.8;"></div>
-            <img id="rolling-img" class="rolling-img" src="">
-            <div id="rolling-value" class="rolling-slot"></div>
-        </div>
     </div>
 
     <script>
@@ -126,27 +121,52 @@
                 if(i === 5) grid.innerHTML += `<div class="team-title">Equipe Vermelha</div>`;
                 grid.innerHTML += `
                 <div class="player-card ${i === state.currentGenIndex ? 'active' : ''}" id="p-card-${i}">
-                    <div style="color: var(--gold); margin-bottom: 1rem; font-weight: bold; font-family: Cinzel; font-size: 1.1rem; letter-spacing: 1px;">${p.name.toUpperCase()}</div>
+                    <div style="color: var(--gold); font-weight: bold; font-family: Cinzel; font-size: 1rem; letter-spacing: 1px;">${p.name.toUpperCase()}</div>
+                    
+                    <div class="section-label">Rota</div>
+                    <div id="res-role-${i}" style="font-size: 0.9rem; color: var(--blue); letter-spacing: 1px; font-family: Cinzel; min-height: 1.2rem;">AGUARDANDO...</div>
+                    
+                    <div class="section-label" style="margin-top: 0">Campeão</div>
                     <img class="slot-img" id="res-img-${i}" src="https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Aatrox_0.jpg" style="filter: grayscale(1) brightness(0.25);">
-                    <div id="res-role-${i}" style="font-size: 0.9rem; color: var(--blue); letter-spacing: 2px; font-family: Cinzel; margin-bottom: 0.5rem;">AGUARDANDO...</div>
-                    <div class="info-grid" id="res-items-${i}">
-                        ${Array(9).fill().map(() => `<div class="item-icon"></div>`).join('')}
+                    
+                    <div class="slots-row">
+                        <div style="flex: 1">
+                            <div class="section-label">Feitiços</div>
+                            <div class="slots-row">
+                                <img class="item-icon" id="res-s1-${i}">
+                                <img class="item-icon" id="res-s2-${i}">
+                            </div>
+                        </div>
+                        <div style="flex: 0.5">
+                            <div class="section-label">Bota</div>
+                            <div class="slots-row">
+                                <img class="item-icon" id="res-bot-${i}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-label">Itens</div>
+                    <div class="items-grid">
+                        <img class="item-icon" id="res-i1-${i}">
+                        <img class="item-icon" id="res-i2-${i}">
+                        <img class="item-icon" id="res-i3-${i}">
+                        <img class="item-icon" id="res-i4-${i}">
+                        <img class="item-icon" id="res-i5-${i}">
+                        <img class="item-icon" id="res-i6-${i}">
                     </div>
                 </div>`;
             });
         };
 
-        const roll = async (field, options, duration = 1200) => {
-            const elImg = document.getElementById('rolling-img');
-            const elValue = document.getElementById('rolling-value');
-            const elLabel = document.getElementById('rolling-field-name');
-            elLabel.innerText = field;
+        const rollSlot = async (type, elId, options, duration = 800) => {
+            const el = document.getElementById(elId);
             let start = Date.now();
             return new Promise(res => {
                 const interval = setInterval(() => {
                     const pick = options[Math.floor(Math.random() * options.length)];
-                    elValue.innerText = pick.name.toUpperCase();
-                    elImg.src = pick.img;
+                    if(type === 'text') el.innerText = pick.name.toUpperCase();
+                    else el.src = pick.img;
+                    
                     if(Date.now() - start > duration) {
                         clearInterval(interval);
                         res(pick);
@@ -156,66 +176,62 @@
         };
 
         document.getElementById('next-btn').onclick = async () => {
-            if(state.currentGenIndex >= state.players.length) return alert('Todos os jogadores gerados!');
-            const p = state.players[state.currentGenIndex];
-            const team = state.currentGenIndex < 5 ? state.pools.team1 : state.pools.team2;
-            const modal = document.getElementById('wheel-modal');
-            modal.style.display = 'flex';
-            document.getElementById('rolling-player-name').innerText = p.name;
+            if(state.currentGenIndex >= state.players.length) return;
+            const btn = document.getElementById('next-btn');
+            btn.disabled = true;
+            btn.innerText = 'Gerando...';
 
+            const idx = state.currentGenIndex;
+            const p = state.players[idx];
+            const team = idx < 5 ? state.pools.team1 : state.pools.team2;
+            
             let role = p.fixedRole;
             if(role === 'RANDOM') {
-                const r = await roll('Escolhendo Rota', team.roles.map(r => ({ name: ROLE_NAMES[r], val: r, img: `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-${r.toLowerCase()}.png` })));
+                const r = await rollSlot('text', `res-role-${idx}`, team.roles.map(r => ({ name: ROLE_NAMES[r], val: r })), 600);
                 role = r.val;
+            } else {
+                document.getElementById(`res-role-${idx}`).innerText = ROLE_NAMES[role].toUpperCase();
             }
             team.roles = team.roles.filter(r => r !== role);
 
-            const champ = await roll('Escolhendo Campeão', team.champs.map(c => ({ name: c.name, val: c, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/champion/${c.id}.png` })));
+            const champ = await rollSlot('img', `res-img-${idx}`, team.champs.map(c => ({ name: c.name, val: c, img: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${c.id}_0.jpg` })), 800);
+            document.getElementById(`res-img-${idx}`).style.filter = 'none';
             team.champs = team.champs.filter(c => c.id !== champ.val.id);
 
-            const s1 = await roll('Feitiço de Invocador 1', state.spells.map(s => ({ name: s.name, val: s, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${s.id}.png` })));
-            const s2 = await roll('Feitiço de Invocador 2', state.spells.filter(s => s.id !== s1.val.id).map(s => ({ name: s.name, val: s, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${s.id}.png` })));
+            const s1 = await rollSlot('img', `res-s1-${idx}`, state.spells.map(s => ({ name: s.name, val: s, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${s.id}.png` })), 400);
+            const s2 = await rollSlot('img', `res-s2-${idx}`, state.spells.filter(s => s.id !== s1.val.id).map(s => ({ name: s.name, val: s, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${s.id}.png` })), 400);
 
-            const boots = await roll('Escolhendo Bota', state.items.filter(i => i.tags.includes('Boots') && i.gold.purchasable).map(i => ({ name: i.name, val: i, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${i.id}.png` })));
+            const boots = await rollSlot('img', `res-bot-${idx}`, state.items.filter(i => i.tags.includes('Boots') && i.gold.purchasable).map(i => ({ name: i.name, val: i, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${i.id}.png` })), 400);
 
             const isSupp = role === 'UTILITY';
             let activeItems = [];
             for(let i=1; i<=6; i++) {
                 const filtered = state.items.filter(it => it.gold.purchasable && !it.tags.includes('Boots') && !activeItems.includes(it.id) && 
                     (isSupp ? true : !it.description.includes('Suporte') && !it.tags.includes('GoldPer') && !it.tags.includes('Vision')));
-                const item = await roll(`Item Lendário ${i}`, filtered.map(it => ({ name: it.name, val: it, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${it.id}.png` })), 400);
+                const item = await rollSlot('img', `res-i${i}-${idx}`, filtered.map(it => ({ name: it.name, val: it, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${it.id}.png` })), 300);
                 activeItems.push(item.val.id);
             }
 
-            modal.style.display = 'none';
+            // Atribuir as tooltips com nomes
+            document.getElementById(`res-s1-${idx}`).title = s1.val.name;
+            document.getElementById(`res-s2-${idx}`).title = s2.val.name;
+            document.getElementById(`res-bot-${idx}`).title = boots.val.name;
+            activeItems.forEach((id, i) => {
+                const itemDef = state.items.find(it => it.id === id);
+                document.getElementById(`res-i${i+1}-${idx}`).title = itemDef ? itemDef.name : '';
+            });
+
             p.result = { role, champ: champ.val, spells: [s1.val, s2.val], boots: boots.val, items: activeItems };
-            updatePlayerCard(state.currentGenIndex);
             
-            document.getElementById(`p-card-${state.currentGenIndex}`).classList.remove('active');
+            document.getElementById(`p-card-${idx}`).classList.remove('active');
             state.currentGenIndex++;
             if(state.currentGenIndex < state.players.length) {
                 document.getElementById(`p-card-${state.currentGenIndex}`).classList.add('active');
+                btn.disabled = false;
+                btn.innerText = 'Gerar Próximo';
             } else {
-                document.getElementById('next-btn').style.display = 'none';
+                btn.style.display = 'none';
             }
-        };
-
-        const updatePlayerCard = (idx) => {
-            const p = state.players[idx];
-            const img = document.getElementById(`res-img-${idx}`);
-            img.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${p.result.champ.id}_0.jpg`;
-            img.style.filter = 'none';
-            document.getElementById(`res-role-${idx}`).innerText = ROLE_NAMES[p.result.role].toUpperCase();
-            const itemsCont = document.getElementById(`res-items-${idx}`);
-            itemsCont.innerHTML = `
-                <img class="item-icon" src="https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${p.result.spells[0].id}.png" title="${p.result.spells[0].name}">
-                <img class="item-icon" src="https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${p.result.spells[1].id}.png" title="${p.result.spells[1].name}">
-                <img class="item-icon" src="https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${p.result.boots.id}.png" title="${p.result.boots.name}">
-                ${p.result.items.map(id => {
-                    const item = state.items.find(it => it.id == id);
-                    return `<img class="item-icon" src="https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${id}.png" title="${item ? item.name : ''}">`;
-                }).join('')}
-            `;
         };
 
         init();
