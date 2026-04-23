@@ -86,10 +86,19 @@
             const BOOTS_IDS = ['3006','3009','3020','3047','3111','3158','3174'];
             state.boots = allItems.filter(it => BOOTS_IDS.includes(it.id));
             state.legendaryItems = state.items.filter(it =>
-                !it.tags.includes('Boots') && !it.into && !it.requiredItem &&
-                !it.tags.includes('Consumable') && !it.tags.includes('Trinket') &&
-                !it.name.includes('Doran') && !it.name.includes('Cristal de Runa') &&
-                it.gold.total >= 2000
+                parseInt(it.id) <= 9999 &&
+                !it.tags.includes('Boots') &&
+                !it.into &&
+                !it.requiredItem &&
+                !it.requiredAlly &&
+                !it.specialRecipe &&
+                !it.hideFromAll &&
+                it.inStore !== false &&
+                !it.tags.includes('Consumable') &&
+                !it.tags.includes('Trinket') &&
+                !it.name.includes('Doran') &&
+                it.from && it.from.length > 0 &&
+                it.gold.total >= 2500
             );
             state.spells = Object.values(s.data).filter(s => s.modes.includes('CLASSIC'));
             renderSetup();
