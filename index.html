@@ -21,9 +21,9 @@
         .btn:hover { background: var(--gold); box-shadow: 0 0 25px var(--gold); transform: translateY(-2px); }
         .player-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; margin-top: 1.2rem; padding-top: 1.2rem; border-top: 1px solid var(--glass); animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        #comp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; margin-top: 3rem; }
-        .team-title { grid-column: 1 / -1; font-family: 'Cinzel', serif; color: var(--blue); border-bottom: 2px solid var(--blue); padding: 1.5rem 0; margin: 3rem 0 1rem; text-align: center; font-size: 2rem; text-shadow: 0 0 15px var(--blue); letter-spacing: 4px; background: linear-gradient(90deg, transparent, rgba(10, 200, 185, 0.1), transparent); }
-        .player-card { background: var(--card-bg); border: 1px solid var(--gold-dark); border-radius: 4px; padding: 1.2rem; text-align: center; position: relative; transition: 0.5s; cursor: default; }
+        #comp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .team-title { grid-column: 1 / -1; font-family: 'Cinzel', serif; color: var(--blue); border-bottom: 2px solid var(--blue); padding: 0.5rem 0; margin: 0.5rem 0 0.5rem; text-align: center; font-size: 1.5rem; text-shadow: 0 0 15px var(--blue); letter-spacing: 4px; background: linear-gradient(90deg, transparent, rgba(10, 200, 185, 0.1), transparent); }
+        .player-card { background: var(--card-bg); border: 1px solid var(--gold-dark); border-radius: 4px; padding: 0.8rem; text-align: center; position: relative; transition: 0.5s; cursor: default; }
         .player-card.active { border-color: var(--blue); box-shadow: 0 0 40px rgba(10, 200, 185, 0.3); transform: translateY(-8px); z-index: 2; }
         .player-card:hover:not(.active) { border-color: var(--gold); transform: translateY(-4px); }
         .slot-img { width: 100%; aspect-ratio: 0.7; background: #000; border: 1px solid var(--gold-dark); object-fit: cover; margin-bottom: 1rem; transition: 1s; box-shadow: inset 0 0 30px black; }
@@ -50,12 +50,12 @@
         </div>
     </div>
 
-    <div class="container hidden" id="comp-screen">
-        <h1 id="view-title">Sua Composição</h1>
-        <div id="comp-grid"></div>
-        <div style="margin-top: 5rem; text-align: center; padding-bottom: 5rem;">
-            <button class="btn" id="next-btn" style="max-width: 350px; font-size: 1.2rem;">Gerar Próximo</button>
+    <div class="container hidden" id="comp-screen" style="padding-top: 1rem;">
+        <h1 id="view-title" style="margin-bottom: 1rem; font-size: 2.5rem;">Sua Composição</h1>
+        <div style="text-align: center; margin-bottom: 1rem;">
+            <button class="btn" id="next-btn" style="max-width: 300px; padding: 0.8rem; font-size: 1rem;">Gerar Próximo</button>
         </div>
+        <div id="comp-grid"></div>
     </div>
 
     <div id="wheel-modal">
@@ -190,9 +190,14 @@
             modal.style.display = 'none';
             p.result = { role, champ: champ.val, spells: [s1.val, s2.val], boots: boots.val, items: activeItems };
             updatePlayerCard(state.currentGenIndex);
+            
+            document.getElementById(`p-card-${state.currentGenIndex}`).classList.remove('active');
             state.currentGenIndex++;
-            renderGrid();
-            document.getElementById(`p-card-${state.currentGenIndex-1}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if(state.currentGenIndex < state.players.length) {
+                document.getElementById(`p-card-${state.currentGenIndex}`).classList.add('active');
+            } else {
+                document.getElementById('next-btn').style.display = 'none';
+            }
         };
 
         const updatePlayerCard = (idx) => {
