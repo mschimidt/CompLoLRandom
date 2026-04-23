@@ -201,13 +201,23 @@
             const s1 = await rollSlot('img', `res-s1-${idx}`, state.spells.map(s => ({ name: s.name, val: s, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${s.id}.png` })), 400);
             const s2 = await rollSlot('img', `res-s2-${idx}`, state.spells.filter(s => s.id !== s1.val.id).map(s => ({ name: s.name, val: s, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${s.id}.png` })), 400);
 
-            const boots = await rollSlot('img', `res-bot-${idx}`, state.items.filter(i => i.tags.includes('Boots') && i.gold.purchasable).map(i => ({ name: i.name, val: i, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${i.id}.png` })), 400);
+            const boots = await rollSlot('img', `res-bot-${idx}`, state.items.filter(i => i.tags.includes('Boots') && i.gold.purchasable && !i.into).map(i => ({ name: i.name, val: i, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${i.id}.png` })), 400);
 
             const isSupp = role === 'UTILITY';
             let activeItems = [];
             for(let i=1; i<=6; i++) {
-                const filtered = state.items.filter(it => it.gold.purchasable && !it.tags.includes('Boots') && !activeItems.includes(it.id) && 
-                    (isSupp ? true : !it.description.includes('Suporte') && !it.tags.includes('GoldPer') && !it.tags.includes('Vision')));
+                const filtered = state.items.filter(it => 
+                    it.gold.purchasable && 
+                    !it.tags.includes('Boots') && 
+                    !activeItems.includes(it.id) && 
+                    !it.tags.includes('Consumable') &&
+                    !it.tags.includes('Trinket') &&
+                    !it.name.includes('Doran') &&
+                    !it.requiredChampion &&
+                    !it.into &&
+                    it.gold.total > 1500 &&
+                    (isSupp ? true : !it.description.includes('Suporte') && !it.tags.includes('GoldPer') && !it.tags.includes('Vision'))
+                );
                 const item = await rollSlot('img', `res-i${i}-${idx}`, filtered.map(it => ({ name: it.name, val: it, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/item/${it.id}.png` })), 300);
                 activeItems.push(item.val.id);
             }
