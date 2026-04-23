@@ -150,6 +150,7 @@
                     
                     <div class="section-label" style="margin-top: 0">Campeão</div>
                     <img class="slot-img" id="res-img-${i}" src="https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Aatrox_0.jpg" style="filter: grayscale(1) brightness(0.25);">
+                    <div id="res-champ-${i}" style="font-family: Cinzel; color: var(--gold); font-size: 0.85rem; margin: 0.3rem 0; letter-spacing: 1px; min-height: 1.2rem;"></div>
                     
                     <div class="slots-row">
                         <div style="flex: 1">
@@ -213,6 +214,7 @@
 
             const champ = await rollSlot('img', `res-img-${idx}`, team.champs.map(c => ({ name: c.name, val: c, img: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${c.id}_0.jpg` })), dur ?? 800);
             document.getElementById(`res-img-${idx}`).style.filter = 'none';
+            document.getElementById(`res-champ-${idx}`).innerText = champ.val.name.toUpperCase();
             team.champs = team.champs.filter(c => c.id !== champ.val.id);
 
             const s1 = await rollSlot('img', `res-s1-${idx}`, state.spells.map(s => ({ name: s.name, val: s, img: `https://ddragon.leagueoflegends.com/cdn/${state.version}/img/spell/${s.id}.png` })), dur ?? 400);
