@@ -83,7 +83,7 @@
             state.items = allItems.filter(it => it.maps && it.maps['11'] && it.gold.purchasable && !it.requiredChampion);
             // IDs fixos das botas finais do SR (não mudam com idioma)
             // 3006=Berserker's, 3009=Swiftness, 3020=Sorcerer's, 3047=Steelcaps, 3111=Mercury's, 3158=Ionian, 3174=Gluttonous
-            const BOOTS_IDS = ['3006','3009','3020','3047','3111','3158','3174'];
+            const BOOTS_IDS = ['3006','3009','3020','3047','3111','3158'];
             state.boots = allItems.filter(it => BOOTS_IDS.includes(it.id));
             state.legendaryItems = state.items.filter(it =>
                 parseInt(it.id) <= 9999 &&
